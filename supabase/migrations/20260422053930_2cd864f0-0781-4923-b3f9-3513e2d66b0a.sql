@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS public.follow_ups (
   subject text NOT NULL,
   context text,
   status text NOT NULL DEFAULT 'open',
-  messages jsonb NOT NULL DEFAULT '[]'::jsonb,
+  messages jsonb NOT NULL
+  DEFAULT '[]'::jsonb,
   medication_id uuid REFERENCES public.medications(id) ON DELETE SET NULL,
   next_check_at timestamptz,
   last_checked_at timestamptz,
