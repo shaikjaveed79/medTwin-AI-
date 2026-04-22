@@ -5,7 +5,8 @@ ALTER TABLE public.medications
 
 CREATE TABLE IF NOT EXISTS public.follow_ups (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
+  user_id uuid NOT NULL
+  REFERENCES auth.users(id) ON DELETE CASCADE,
   trigger_type text NOT NULL DEFAULT 'general',
   subject text NOT NULL,
   context text,
