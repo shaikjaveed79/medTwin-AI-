@@ -1,7 +1,7 @@
 
 ALTER TABLE public.medications
-  ADD COLUMN IF NOT EXISTS purpose text,
-  ADD COLUMN IF NOT EXISTS missed_dose_instructions text;
+  ADD COLUMN IF NOT EXISTS purpose TEXT,
+  ADD COLUMN IF NOT EXISTS missed_dose_instructions TEXT;
 
 CREATE TABLE IF NOT EXISTS public.follow_ups (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
