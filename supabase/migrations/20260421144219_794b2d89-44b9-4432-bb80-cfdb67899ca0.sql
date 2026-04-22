@@ -1,4 +1,4 @@
-CREATE POLICY ""Allow users to update their own reports""
+CREATE POLICY "Users can update own reports"
 ON public.medical_reports
 FOR UPDATE
 USING (
