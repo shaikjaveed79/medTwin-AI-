@@ -51,7 +51,7 @@ CREATE TABLE public.visual_analyses (
   severity TEXT,
   urgency TEXT DEFAULT 'low',
   infection_signs BOOLEAN DEFAULT false,
-  alert_sent BOOLEAN DEFAULT false,
+  alert_sent      BOOLEAN DEFAULT false,
   alert_recipient TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
