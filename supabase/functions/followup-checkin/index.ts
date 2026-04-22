@@ -7,7 +7,17 @@ const corsHeaders = {
 };
 
 type Msg = { role: "assistant" | "user"; content: string; ts?: string };
+function extractToken(authHeader: string | null): string | null {
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  return authHeader.replace("Bearer ", "");
+}
 
+function cleanAIResponse(content: string) {
+  return content
+    ?.replace(/\[URGENT\]/gi, "")
+    ?.replace(/\[COMPLETE\]/gi, "")
+    ?.trim();
+}
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -22,8 +32,9 @@ serve(async (req) => {
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_ANON_KEY")!
 );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await supa.auth.getClaims(token);
+    const token = extractToken(authHeader);
+   const { data: claimsData, error: authError } =
+  await supabaseClient.auth.getClaims(token);
     if (authError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -109,8 +120,9 @@ Context: ${context || "none"}`;
       });
     }
 
-    const ai = await response.json();
-    const content = (ai.choices?.[0]?.message?.content || "").trim();
+    const aiResponse = await response.json();
+    const content =
+  aiResponse?.choices?.[0]?.message?.content?.trim() || "";
     const urgent = /\[URGENT\]/i.test(content);
     const complete = /\[COMPLETE\]/i.test(content);
     const cleaned = content.replace(/\[URGENT\]/gi, "").replace(/\[COMPLETE\]/gi, "").trim();
