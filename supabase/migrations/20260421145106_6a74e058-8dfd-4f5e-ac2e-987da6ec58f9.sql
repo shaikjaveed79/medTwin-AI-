@@ -74,7 +74,7 @@ CREATE POLICY "Users can delete own analyses"
   ON public.visual_analyses FOR DELETE
   USING (auth.uid() = user_id);
 
-CREATE INDEX idx_visual_analyses_user_location
+CREATE INDEX idx_visual_analyses_user_location_created
   ON public.visual_analyses(user_id, body_location, created_at DESC);
 
 -- Private storage bucket for wound photos
