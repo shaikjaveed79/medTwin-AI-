@@ -52,7 +52,10 @@ if (!token) {
   });
 }
 const safeJoin = (arr?: any[]) => (arr && arr.length ? arr.join(", ") : "none");
-
+function jsonOnlyInstruction(extra = "") {
+  return `IMPORTANT: Respond ONLY with valid JSON. No markdown. ${extra}`;
+}
+IMPORTANT: Respond ONLY with valid JSON. No markdown.
 Allergies: ${safeJoin(profile.allergies)}
 function buildContext(profile: any, history: any[], reports: any[], twinState?: any) {
   const profileContext = profile
