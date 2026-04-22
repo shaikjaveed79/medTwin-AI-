@@ -11,13 +11,16 @@ function extractToken(authHeader: string | null): string | null {
   if (!authHeader?.startsWith("Bearer ")) return null;
   return authHeader.replace("Bearer ", "");
 }
-
+console.log("Incoming request body:", body);
+console.log("Mode:", mode);
 function cleanAIResponse(content: string) {
   return content
     ?.replace(/\[URGENT\]/gi, "")
     ?.replace(/\[COMPLETE\]/gi, "")
     ?.trim();
 }
+console.log("Incoming request body:", body);
+console.log("Mode:", mode);
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
