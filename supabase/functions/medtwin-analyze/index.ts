@@ -44,6 +44,13 @@ async function callAI(apiKey: string, systemPrompt: string, userPrompt: string) 
     clearTimeout(timeout);
   }
 }
+const token = getToken(req);
+if (!token) {
+  return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    status: 401,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+}
 
 function buildContext(profile: any, history: any[], reports: any[], twinState?: any) {
   const profileContext = profile
