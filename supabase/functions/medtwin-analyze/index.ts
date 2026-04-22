@@ -61,7 +61,12 @@ function buildContext(profile: any, history: any[], reports: any[], twinState?: 
   const profileContext = profile
     ? `Patient profile: Age: ${profile.age || "unknown"}, Blood type: ${profile.blood_type || "unknown"}, Allergies: ${(profile.allergies || []).join(", ") || "none"}, Chronic conditions: ${(profile.chronic_conditions || []).join(", ") || "none"}.`
     : "";
-
+function jsonResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+}
   const historyContext = history && history.length > 0
     ? `Recent health history: ${history.map((h: any) => `${h.symptoms?.join(", ")} → ${h.condition} (${h.risk_level}) on ${h.created_at}`).join("; ")}.`
     : "No prior health history.";
@@ -98,7 +103,10 @@ async function parseAIResponse(response: Response) {
   try {
     if (!response.ok) {
       const text = await response.text();
-      console.error("AI error:", response.status, text);
+      console.error("medtwin-analyze error:", {
+  message: e instanceof Error ? e.message : e,
+  stack: e instanceof Error ? e.stack : null,
+});
 
       if (response.status === 429) {
         return { error: "Rate limit exceeded", status: 429 };
