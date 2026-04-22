@@ -7,7 +7,20 @@ const corsHeaders = {
 };
 
 type Msg = { role: "assistant" | "user"; content: string; ts?: string };
-
+function extractToken(authHeader: string | null): string | null {
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  return authHeader.replace("Bearer ", "");
+}
+console.log("Incoming request body:", body);
+console.log("Mode:", mode);
+function cleanAIResponse(content: string) {
+  return content
+    ?.replace(/\[URGENT\]/gi, "")
+    ?.replace(/\[COMPLETE\]/gi, "")
+    ?.trim();
+}
+console.log("Incoming request body:", body);
+console.log("Mode:", mode);
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -18,9 +31,13 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await supa.auth.getClaims(token);
+    const supabaseClient = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_ANON_KEY")!
+);
+    const token = extractToken(authHeader);
+   const { data: claimsData, error: authError } =
+  await supabaseClient.auth.getClaims(token);
     if (authError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -49,7 +66,9 @@ Style:
 - If the patient describes red-flag symptoms (severe pain, bleeding, shortness of breath, fainting, suicidal thoughts, signs of infection like spreading redness/fever), respond with clear "seek urgent care" guidance and end with: [URGENT].
 - When you have gathered enough info for this check-in (usually 3-5 turns), end your final message with: [COMPLETE].
 - Never diagnose. Never prescribe. Suggest contacting their clinician for medical decisions.
-
+- Keep responses empathetic and conversational
+- Avoid repeating the same question
+- Personalize based on patient context
 Respond with PLAIN TEXT only — no JSON, no markdown headings.`;
 
     const baseContext = `Follow-up subject: ${subject}
@@ -67,7 +86,11 @@ Context: ${context || "none"}`;
       });
     } else {
       aiMessages.push({ role: "user", content: baseContext });
-      const prior = (messages as Msg[] | undefined) || [];
+      for (const m of prior) {
+  if (m?.content) {
+    aiMessages.push({ role: m.role, content: m.content });
+  }
+}
       for (const m of prior) {
         aiMessages.push({ role: m.role, content: m.content });
       }
@@ -106,18 +129,25 @@ Context: ${context || "none"}`;
       });
     }
 
-    const ai = await response.json();
-    const content = (ai.choices?.[0]?.message?.content || "").trim();
+    const aiResponse = await response.json();
+    const content =
+  aiResponse?.choices?.[0]?.message?.content?.trim() || "";
     const urgent = /\[URGENT\]/i.test(content);
     const complete = /\[COMPLETE\]/i.test(content);
     const cleaned = content.replace(/\[URGENT\]/gi, "").replace(/\[COMPLETE\]/gi, "").trim();
 
     return new Response(
-      JSON.stringify({ message: cleaned, urgent, complete }),
+      JSON.stringify({
+  message: cleaned,
+  urgent,
+  complete,
+  timestamp
+}),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
     console.error("followup-checkin error:", e);
+    const timestamp = new Date().toISOString();
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
