@@ -83,17 +83,34 @@ IMPORTANT: You MUST reference the twin state in your analysis. If recurring symp
 }
 
 async function parseAIResponse(response: Response) {
-  if (!response.ok) {
-    if (response.status === 429) {
-      return { error: "Rate limits exceeded, please try again later.", status: 429 };
+  try {
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("AI error:", response.status, text);
+
+      if (response.status === 429) {
+        return { error: "Rate limit exceeded", status: 429 };
+      }
+
+      return { error: "AI request failed", status: response.status };
     }
-    if (response.status === 402) {
-      return { error: "AI credits exhausted. Please add funds.", status: 402 };
+
+    const data = await response.json();
+    let content = data.choices?.[0]?.message?.content || "";
+
+    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+    try {
+      return { parsed: JSON.parse(content), status: 200 };
+    } catch {
+      console.error("Invalid JSON from AI:", content);
+      return { error: "Invalid AI response format", status: 500 };
     }
-    const t = await response.text();
-    console.error("AI gateway error:", response.status, t);
-    return { error: "AI gateway error", status: 500 };
+
+  } catch (err) {
+    return { error: "Unexpected parsing error", status: 500 };
   }
+}
 
   const aiResponse = await response.json();
   let content = aiResponse.choices?.[0]?.message?.content || "";
