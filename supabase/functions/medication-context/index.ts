@@ -12,17 +12,24 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({
+  success: false,
+  error: "Missing medication name",
+  message: "Medication name is required and must be a string"
+}), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const supabaseAuth = createClient(
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
     );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await supabaseAuth.auth.getClaims(token);
+    console.log("Medication request received:", { name, dosage, frequency, conditions });
+    console.log("Sending medication context request to AI...");
+
+    const token = extractToken(authHeader);
+    const { data: claimsData, error: authError } =await supabaseClient.auth.getClaims(token);
     if (authError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -46,7 +53,10 @@ serve(async (req) => {
   "purpose": "1-2 sentences: what this medication does and why someone with these conditions might take it",
   "missed_dose_instructions": "2-3 sentences: practical advice if a dose is missed (e.g. take it as soon as you remember unless it's almost time for the next dose, never double up). Be specific to this drug class when known."
 }
-Keep each field under 280 characters. Avoid medical jargon. Never invent a diagnosis.`;
+Keep each field under 280 characters. Avoid medical jargon. Never invent a diagnosis.
+- Keep tone empathetic and simple
+- Avoid repeating phrases
+- Tailor response to patient conditions when possible`;
 
     const userPrompt = `Medication: ${name}${dosage ? ` (${dosage})` : ""}${frequency ? `, ${frequency}` : ""}.
 Patient chronic conditions: ${(conditions || []).join(", ") || "none reported"}.`;
@@ -77,24 +87,54 @@ Patient chronic conditions: ${(conditions || []).join(", ") || "none reported"}.
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      const timestamp = new Date().toISOString();
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+   return new Response(JSON.stringify({
+  ...parsed,
+  timestamp
+}), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    function extractToken(authHeader: string | null): string | null {
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  return authHeader.replace("Bearer ", "");
+}
 
-    const ai = await response.json();
-    let content = ai.choices?.[0]?.message?.content || "";
-    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(content);
+function cleanJsonResponse(content: string) {
+  return content
+    .replace(/```json\n?/g, "")
+    .replace(/```\n?/g, "")
+    .trim();
+}
+    const aiResponse = await response.json();
+    let content = aiResponse?.choices?.[0]?.message?.content || "";
+    content = cleanJsonResponse(content);
+    let parsed;
+try {
+  parsed = JSON.parse(content);
+} catch (err) {
+  console.error("JSON parse error:", content);
+  return new Response(JSON.stringify({
+    success: false,
+    error: "Invalid AI response format"
+  }), {
+    status: 500,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("medication-context error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({
+  success: false,
+  error: "Unauthorized",
+  message: "Invalid or missing authentication token"
+}), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

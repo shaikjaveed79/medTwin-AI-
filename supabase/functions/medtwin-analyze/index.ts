@@ -1,33 +1,72 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
+const CORS_HEADERS = Object.freeze({
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+  "Access-Control-Allow-Headers": [
+    "authorization",
+    "x-client-info",
+    "apikey",
+    "content-type",
+    "x-supabase-client-platform",
+    "x-supabase-client-platform-version",
+    "x-supabase-client-runtime",
+    "x-supabase-client-runtime-version",
+  ].join(", "),
+});
 
-function callAI(apiKey: string, systemPrompt: string, userPrompt: string) {
-  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-    }),
+
+async function callAI(apiKey: string, systemPrompt: string, userPrompt: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+
+    return res;
+  } catch (err) {
+    console.error("AI request failed:", err);
+    throw new Error("AI service unavailable");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+const token = getToken(req);
+if (!token) {
+  return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    status: 401,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
 }
-
+const safeJoin = (arr?: any[]) => (arr && arr.length ? arr.join(", ") : "none");
+function jsonOnlyInstruction(extra = "") {
+  return `IMPORTANT: Respond ONLY with valid JSON. No markdown. ${extra}`;
+}
+IMPORTANT: Respond ONLY with valid JSON. No markdown.
+Allergies: ${safeJoin(profile.allergies)}
 function buildContext(profile: any, history: any[], reports: any[], twinState?: any) {
   const profileContext = profile
     ? `Patient profile: Age: ${profile.age || "unknown"}, Blood type: ${profile.blood_type || "unknown"}, Allergies: ${(profile.allergies || []).join(", ") || "none"}, Chronic conditions: ${(profile.chronic_conditions || []).join(", ") || "none"}.`
     : "";
-
+function jsonResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+}
   const historyContext = history && history.length > 0
     ? `Recent health history: ${history.map((h: any) => `${h.symptoms?.join(", ")} → ${h.condition} (${h.risk_level}) on ${h.created_at}`).join("; ")}.`
     : "No prior health history.";
@@ -61,17 +100,37 @@ IMPORTANT: You MUST reference the twin state in your analysis. If recurring symp
 }
 
 async function parseAIResponse(response: Response) {
-  if (!response.ok) {
-    if (response.status === 429) {
-      return { error: "Rate limits exceeded, please try again later.", status: 429 };
+  try {
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("medtwin-analyze error:", {
+  message: e instanceof Error ? e.message : e,
+  stack: e instanceof Error ? e.stack : null,
+});
+
+      if (response.status === 429) {
+        return { error: "Rate limit exceeded", status: 429 };
+      }
+
+      return { error: "AI request failed", status: response.status };
     }
-    if (response.status === 402) {
-      return { error: "AI credits exhausted. Please add funds.", status: 402 };
+
+    const data = await response.json();
+    let content = data.choices?.[0]?.message?.content || "";
+
+    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+    try {
+      return { parsed: JSON.parse(content), status: 200 };
+    } catch {
+      console.error("Invalid JSON from AI:", content);
+      return { error: "Invalid AI response format", status: 500 };
     }
-    const t = await response.text();
-    console.error("AI gateway error:", response.status, t);
-    return { error: "AI gateway error", status: 500 };
+
+  } catch (err) {
+    return { error: "Unexpected parsing error", status: 500 };
   }
+}
 
   const aiResponse = await response.json();
   let content = aiResponse.choices?.[0]?.message?.content || "";
