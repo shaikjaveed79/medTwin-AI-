@@ -1,12 +1,19 @@
+-- =========================================
+-- MedTwin AI Database Schema
+-- Author: Rasool Shaik
+-- Role: Backend Developer
+-- Description: Core schema for health tracking system
+-- =========================================
 
 -- Create emergency_contacts table
 CREATE TABLE public.emergency_contacts (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL
+  REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   phone_number TEXT NOT NULL,
   relationship TEXT,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 ALTER TABLE public.emergency_contacts ENABLE ROW LEVEL SECURITY;
