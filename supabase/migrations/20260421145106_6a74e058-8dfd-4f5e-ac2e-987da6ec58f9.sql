@@ -84,9 +84,10 @@ VALUES ('wound_photos', 'wound_photos', false);
 CREATE POLICY "Users can upload own wound photos"
   ON storage.objects FOR INSERT
   WITH CHECK (
-    bucket_id = 'wound_photos'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
+  bucket_id = 'wound_photos'
+  AND auth.uid()::text =
+      (storage.foldername(name))[1]
+);
 
 CREATE POLICY "Users can view own wound photos"
   ON storage.objects FOR SELECT
