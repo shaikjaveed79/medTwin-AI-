@@ -12,6 +12,7 @@ CREATE TABLE public.profiles (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
   display_name TEXT,
+  phone TEXT,
   age INTEGER,
   blood_type TEXT,
   allergies TEXT[],
