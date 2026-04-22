@@ -87,9 +87,13 @@ Patient chronic conditions: ${(conditions || []).join(", ") || "none reported"}.
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      const timestamp = new Date().toISOString();
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+   return new Response(JSON.stringify({
+  ...parsed,
+  timestamp
+}), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
