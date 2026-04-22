@@ -11,6 +11,11 @@ function jsonResponse(data: any, status = 200) {
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
 }
+function requireEnv(name: string): string {
+  const val = Deno.env.get(name);
+  if (!val) throw new Error(`${name} is not configured`);
+  return val;
+}
 const token = authHeader.replace("Bearer ", "");
 const token = extractToken(req);
 if (!token) {
@@ -179,4 +184,5 @@ Generate the simulation.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  requireEnv("SUPABASE_URL")
 });
