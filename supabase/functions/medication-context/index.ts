@@ -17,12 +17,12 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const supabaseAuth = createClient(
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
     );
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await supabaseAuth.auth.getClaims(token);
+    const token = extractToken(authHeader);
+    const { data: claimsData, error: authError } =await supabaseClient.auth.getClaims(token);
     if (authError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -83,10 +83,20 @@ Patient chronic conditions: ${(conditions || []).join(", ") || "none reported"}.
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    function extractToken(authHeader: string | null): string | null {
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  return authHeader.replace("Bearer ", "");
+}
 
-    const ai = await response.json();
-    let content = ai.choices?.[0]?.message?.content || "";
-    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+function cleanJsonResponse(content: string) {
+  return content
+    .replace(/```json\n?/g, "")
+    .replace(/```\n?/g, "")
+    .trim();
+}
+    const aiResponse = await response.json();
+    let content = aiResponse?.choices?.[0]?.message?.content || "";
+    content = cleanJsonResponse(content);
     const parsed = JSON.parse(content);
 
     return new Response(JSON.stringify(parsed), {
