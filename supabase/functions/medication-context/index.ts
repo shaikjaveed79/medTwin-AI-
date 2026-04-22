@@ -27,7 +27,7 @@ serve(async (req) => {
     );
     console.log("Medication request received:", { name, dosage, frequency, conditions });
     console.log("Sending medication context request to AI...");
-    
+
     const token = extractToken(authHeader);
     const { data: claimsData, error: authError } =await supabaseClient.auth.getClaims(token);
     if (authError || !claimsData?.claims) {
@@ -104,7 +104,19 @@ function cleanJsonResponse(content: string) {
     const aiResponse = await response.json();
     let content = aiResponse?.choices?.[0]?.message?.content || "";
     content = cleanJsonResponse(content);
-    const parsed = JSON.parse(content);
+    let parsed;
+try {
+  parsed = JSON.parse(content);
+} catch (err) {
+  console.error("JSON parse error:", content);
+  return new Response(JSON.stringify({
+    success: false,
+    error: "Invalid AI response format"
+  }), {
+    status: 500,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
