@@ -43,7 +43,7 @@ CREATE POLICY "Users can delete own follow-ups"
   ON public.follow_ups FOR DELETE
   USING (auth.uid() = user_id);
 
-CREATE TRIGGER update_follow_ups_updated_at
+CREATE TRIGGER trg_follow_ups_updated_at
   BEFORE UPDATE ON public.follow_ups
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
