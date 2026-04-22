@@ -17,11 +17,15 @@ ALTER TABLE public.treatment_simulations ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own simulations"
   ON public.treatment_simulations FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (
+  auth.uid() = user_id
+); 
 
 CREATE POLICY "Users can create own simulations"
   ON public.treatment_simulations FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (
+  auth.uid() = user_id
+);
 
 CREATE POLICY "Users can update own simulations"
   ON public.treatment_simulations FOR UPDATE
