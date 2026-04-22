@@ -51,7 +51,9 @@ if (!token) {
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
 }
+const safeJoin = (arr?: any[]) => (arr && arr.length ? arr.join(", ") : "none");
 
+Allergies: ${safeJoin(profile.allergies)}
 function buildContext(profile: any, history: any[], reports: any[], twinState?: any) {
   const profileContext = profile
     ? `Patient profile: Age: ${profile.age || "unknown"}, Blood type: ${profile.blood_type || "unknown"}, Allergies: ${(profile.allergies || []).join(", ") || "none"}, Chronic conditions: ${(profile.chronic_conditions || []).join(", ") || "none"}.`
