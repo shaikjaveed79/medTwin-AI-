@@ -12,7 +12,11 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({
+  success: false,
+  error: "Missing medication name",
+  message: "Medication name is required and must be a string"
+}), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -21,6 +25,9 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
     );
+    console.log("Medication request received:", { name, dosage, frequency, conditions });
+    console.log("Sending medication context request to AI...");
+    
     const token = extractToken(authHeader);
     const { data: claimsData, error: authError } =await supabaseClient.auth.getClaims(token);
     if (authError || !claimsData?.claims) {
@@ -104,7 +111,11 @@ function cleanJsonResponse(content: string) {
     });
   } catch (e) {
     console.error("medication-context error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+    return new Response(JSON.stringify({
+  success: false,
+  error: "Unauthorized",
+  message: "Invalid or missing authentication token"
+}), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
