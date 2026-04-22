@@ -48,4 +48,5 @@ CREATE TRIGGER trg_follow_ups_updated_at
   FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column();
 
-CREATE INDEX IF NOT EXISTS idx_follow_ups_user_status ON public.follow_ups(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_follow_ups_user_status
+  ON public.follow_ups(user_id, status);
