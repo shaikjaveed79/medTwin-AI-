@@ -12,7 +12,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                className="h-14 flex items-center border-b border-border/50 bg-card/60 backdrop-blur-md px-4 sticky top-0 z-10"
                 role="banner"
                >
-            <SidebarTrigger className="mr-3" />
+            <SidebarTrigger 
+                 className="mr-3" 
+                  aria-label="Toggle Sidebar"
+                  aria-controls="app-sidebar"
+                  aria-expanded="false"
+                     />
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-lg bg-gradient-primary flex items-center justify-center">
                 <Heart className="h-3.5 w-3.5 text-primary-foreground" />
