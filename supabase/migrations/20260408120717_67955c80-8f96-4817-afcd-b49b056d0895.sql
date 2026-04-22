@@ -4,11 +4,14 @@
 -- Role: Backend Engineer
 -- Description: Core database structure for health tracking system
 -- =========================================
+
 -- =========================================
 -- Table: profiles
 -- Stores user personal and medical information
 -- =========================================
+
 CREATE TABLE public.profiles (
+
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
   display_name TEXT,
@@ -20,6 +23,7 @@ CREATE TABLE public.profiles (
   emergency_contacts JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+
 );
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -30,7 +34,9 @@ CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING
 
 -- Table: health_sessions
 -- Stores symptom inputs and AI diagnosis results
+
 CREATE TABLE public.health_sessions (
+
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   symptoms TEXT[] NOT NULL,
@@ -45,6 +51,7 @@ CREATE TABLE public.health_sessions (
   status TEXT NOT NULL DEFAULT 'input' CHECK (status IN ('input', 'questioning', 'analyzing', 'complete')),
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+
 );
 
 ALTER TABLE public.health_sessions ENABLE ROW LEVEL SECURITY;
@@ -55,7 +62,9 @@ CREATE POLICY "Users can update own sessions" ON public.health_sessions FOR UPDA
 
 -- Table: medical_reports
 -- Stores uploaded reports and extracted data
+
 CREATE TABLE public.medical_reports (
+
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   report_name TEXT NOT NULL,
@@ -64,6 +73,7 @@ CREATE TABLE public.medical_reports (
   structured_data JSONB,
   file_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+
 );
 
 ALTER TABLE public.medical_reports ENABLE ROW LEVEL SECURITY;
@@ -74,7 +84,9 @@ CREATE POLICY "Users can delete own reports" ON public.medical_reports FOR DELET
 
 -- Table: health_timeline
 -- Tracks chronological health events
+
 CREATE TABLE public.health_timeline (
+
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   event_type TEXT NOT NULL CHECK (event_type IN ('symptom', 'diagnosis', 'report', 'alert', 'note')),
@@ -83,6 +95,7 @@ CREATE TABLE public.health_timeline (
   metadata JSONB,
   session_id UUID REFERENCES public.health_sessions(id),
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+
 );
 
 ALTER TABLE public.health_timeline ENABLE ROW LEVEL SECURITY;
@@ -91,6 +104,7 @@ CREATE POLICY "Users can view own timeline" ON public.health_timeline FOR SELECT
 CREATE POLICY "Users can create own timeline" ON public.health_timeline FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Timestamp trigger
+
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -103,6 +117,7 @@ CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR E
 CREATE TRIGGER update_health_sessions_updated_at BEFORE UPDATE ON public.health_sessions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Auto-create profile on signup
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
