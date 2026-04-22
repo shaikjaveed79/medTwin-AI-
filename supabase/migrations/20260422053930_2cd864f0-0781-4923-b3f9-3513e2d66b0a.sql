@@ -24,7 +24,9 @@ ALTER TABLE public.follow_ups ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own follow-ups"
   ON public.follow_ups FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (
+  auth.uid() = user_id
+);
 
 CREATE POLICY "Users can create own follow-ups"
   ON public.follow_ups FOR INSERT
@@ -32,7 +34,9 @@ CREATE POLICY "Users can create own follow-ups"
 
 CREATE POLICY "Users can update own follow-ups"
   ON public.follow_ups FOR UPDATE
-  USING (auth.uid() = user_id)
+  WITH CHECK (
+  auth.uid() = user_id
+);
   WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own follow-ups"
