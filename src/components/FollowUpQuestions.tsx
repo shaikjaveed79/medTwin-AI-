@@ -25,7 +25,7 @@ export function FollowUpQuestions({ questions, onSubmit, loading }: FollowUpQues
 
   const current = questions[currentIndex];
   const total = questions.length;
-  const allAnswered = questions.every((q) => answers[q.id]?.trim());
+  const areAllQuestionsAnswered = questions.every((q) => answers[q.id]?.trim());
 
   const setAnswer = (id: number, value: string) => {
     setAnswers((prev) => ({ ...prev, [id]: value }));
