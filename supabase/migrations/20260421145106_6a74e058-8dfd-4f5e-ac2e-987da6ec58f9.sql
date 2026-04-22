@@ -1,7 +1,8 @@
 -- Treatment simulations table
 CREATE TABLE public.treatment_simulations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL
+  REFERENCES auth.users(id) ON DELETE CASCADE,
   condition TEXT NOT NULL,
   lifestyle_inputs JSONB NOT NULL DEFAULT '{}'::jsonb,
   baseline_metrics JSONB DEFAULT '{}'::jsonb,
