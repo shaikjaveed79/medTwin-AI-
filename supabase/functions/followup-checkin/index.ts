@@ -18,7 +18,10 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const supabaseClient = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_ANON_KEY")!
+);
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: authError } = await supa.auth.getClaims(token);
     if (authError || !claimsData?.claims) {
