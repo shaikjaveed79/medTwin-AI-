@@ -1,7 +1,8 @@
 -- Treatment simulations table
 CREATE TABLE public.treatment_simulations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL
+  REFERENCES auth.users(id) ON DELETE CASCADE,
   condition TEXT NOT NULL,
   lifestyle_inputs JSONB NOT NULL DEFAULT '{}'::jsonb,
   baseline_metrics JSONB DEFAULT '{}'::jsonb,
@@ -16,11 +17,15 @@ ALTER TABLE public.treatment_simulations ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own simulations"
   ON public.treatment_simulations FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (
+  auth.uid() = user_id
+); 
 
 CREATE POLICY "Users can create own simulations"
   ON public.treatment_simulations FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (
+  auth.uid() = user_id
+);
 
 CREATE POLICY "Users can update own simulations"
   ON public.treatment_simulations FOR UPDATE
@@ -46,7 +51,7 @@ CREATE TABLE public.visual_analyses (
   severity TEXT,
   urgency TEXT DEFAULT 'low',
   infection_signs BOOLEAN DEFAULT false,
-  alert_sent BOOLEAN DEFAULT false,
+  alert_sent      BOOLEAN DEFAULT false,
   alert_recipient TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -69,7 +74,7 @@ CREATE POLICY "Users can delete own analyses"
   ON public.visual_analyses FOR DELETE
   USING (auth.uid() = user_id);
 
-CREATE INDEX idx_visual_analyses_user_location
+CREATE INDEX idx_visual_analyses_user_location_created
   ON public.visual_analyses(user_id, body_location, created_at DESC);
 
 -- Private storage bucket for wound photos
@@ -79,9 +84,10 @@ VALUES ('wound_photos', 'wound_photos', false);
 CREATE POLICY "Users can upload own wound photos"
   ON storage.objects FOR INSERT
   WITH CHECK (
-    bucket_id = 'wound_photos'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
+  bucket_id = 'wound_photos'
+  AND auth.uid()::text =
+      (storage.foldername(name))[1]
+);
 
 CREATE POLICY "Users can view own wound photos"
   ON storage.objects FOR SELECT
