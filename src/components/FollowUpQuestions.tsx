@@ -79,6 +79,7 @@ export function FollowUpQuestions({ questions, onSubmit, loading }: FollowUpQues
         <CardContent className="p-6 space-y-5">
           <div className="min-h-[200px] flex flex-col justify-between">
             <div className="space-y-4">
+                const progressLabel = `Question ${currentIndex + 1} of ${total};
               <p className="text-lg font-semibold font-display leading-snug">
                 <span className="text-primary mr-2">Q{currentIndex + 1}.</span>
                 {current.question}
