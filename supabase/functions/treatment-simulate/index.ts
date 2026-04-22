@@ -132,21 +132,33 @@ Lifestyle inputs:
 ${baseline ? `Baseline metrics: ${JSON.stringify(baseline)}` : "Use realistic baseline values for this condition based on the patient profile."}
 
 Generate the simulation.`;
+const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
+let response;
+
+try {
+  response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    signal: controller.signal,
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  });
+} catch (err) {
+  console.error("AI request failed:", err);
+  return jsonResponse({ error: "AI service unavailable" }, 500);
+} finally {
+  clearTimeout(timeout);
+}
 
     if (!response.ok) {
       if (response.status === 429) {
