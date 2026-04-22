@@ -1,11 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
+const CORS_HEADERS = Object.freeze({
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
+function jsonResponse(data: any, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+}
+function requireEnv(name: string): string {
+  const val = Deno.env.get(name);
+  if (!val) throw new Error(`${name} is not configured`);
+  return val;
+}
+const token = authHeader.replace("Bearer ", "");
+const token = extractToken(req);
+if (!token) {
+function extractToken(req: Request): string | null {
+  const auth = req.headers.get("Authorization");
+  return auth?.startsWith("Bearer ") ? auth.replace("Bearer ", "") : null;
+}
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -115,21 +132,40 @@ Lifestyle inputs:
 ${baseline ? `Baseline metrics: ${JSON.stringify(baseline)}` : "Use realistic baseline values for this condition based on the patient profile."}
 
 Generate the simulation.`;
+const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
+let response;
+
+try {
+  response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    signal: controller.signal,
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  });
+  let parsed;
+try {
+  parsed = JSON.parse(content);
+} catch {
+  console.error("Invalid AI JSON:", content);
+  return jsonResponse({ error: "Invalid AI response format" }, 500);
+}
+} catch (err) {
+  console.error("AI request failed:", err);
+  return jsonResponse({ error: "AI service unavailable" }, 500);
+} finally {
+  clearTimeout(timeout);
+}
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -167,4 +203,13 @@ Generate the simulation.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  requireEnv("SUPABASE_URL");
+  function formatDuration(start_date?: string) {
+  if (!start_date) return "duration unknown";
+  const days = Math.max(
+    0,
+    Math.round((Date.now() - new Date(start_date).getTime()) / (1000 * 60 * 60 * 24))
+  );
+  return `${days} days`;
+}
 });
