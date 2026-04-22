@@ -1,12 +1,28 @@
+-- =========================================
+-- MedTwin AI Database Schema
+-- Author: Rasool Shaik
+-- Role: Backend Developer
+-- Description: Core schema for health tracking system
+-- =========================================
+
 -- Medications table: stores prescription / supplement entries
+
 CREATE TABLE public.medications (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL,
-  name TEXT NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL
+  REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name TEXT,
+  phone TEXT,
   dosage TEXT,
-  frequency TEXT NOT NULL DEFAULT 'daily', -- daily | twice_daily | thrice_daily | custom
+  frequency TEXT NOT NULL DEFAULT 'daily', 
+  
+  -- daily | twice_daily | thrice_daily | custom
+  
   times_per_day INTEGER NOT NULL DEFAULT 1,
-  reminder_times TEXT[] NOT NULL DEFAULT ARRAY['09:00'], -- HH:MM strings
+  reminder_times TEXT[] NOT NULL DEFAULT ARRAY['09:00'], 
+  
+  -- HH:MM strings
+  
   notes TEXT,
   start_date DATE NOT NULL DEFAULT CURRENT_DATE,
   end_date DATE,
@@ -32,13 +48,17 @@ BEFORE UPDATE ON public.medications
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Medication logs: per-dose adherence record
+
 CREATE TABLE public.medication_logs (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL,
   medication_id UUID NOT NULL REFERENCES public.medications(id) ON DELETE CASCADE,
   scheduled_for TIMESTAMPTZ NOT NULL,
   taken_at TIMESTAMPTZ,
-  status TEXT NOT NULL DEFAULT 'pending', -- pending | taken | skipped | missed
+  status TEXT NOT NULL DEFAULT 'pending',
+  
+   -- pending | taken | skipped | missed
+  
   notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
