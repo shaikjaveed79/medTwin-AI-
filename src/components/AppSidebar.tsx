@@ -48,7 +48,13 @@ export function AppSidebar() {
   const { signOut, user } = useAuth();
   const { twinState } = useTwinState();
 
-  const scoreColor = twinState.health_score >= 70 ? "text-success" : twinState.health_score >= 40 ? "text-warning" : "text-critical";
+  const getScoreColor = (score) => {
+  if (score >= 70) return "text-success";
+  if (score >= 40) return "text-warning";
+  return "text-critical";
+};
+
+const scoreColor = getScoreColor(twinState.health_score);
 
   return (
     <Sidebar collapsible="icon">
