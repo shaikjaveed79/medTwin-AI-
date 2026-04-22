@@ -153,6 +153,13 @@ try {
       ],
     }),
   });
+  let parsed;
+try {
+  parsed = JSON.parse(content);
+} catch {
+  console.error("Invalid AI JSON:", content);
+  return jsonResponse({ error: "Invalid AI response format" }, 500);
+}
 } catch (err) {
   console.error("AI request failed:", err);
   return jsonResponse({ error: "AI service unavailable" }, 500);
