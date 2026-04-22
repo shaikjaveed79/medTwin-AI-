@@ -15,21 +15,34 @@ const CORS_HEADERS = Object.freeze({
 });
 
 
-function callAI(apiKey: string, systemPrompt: string, userPrompt: string) {
-  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompft },
-      ],
-    }),
-  });
+async function callAI(apiKey: string, systemPrompt: string, userPrompt: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+
+    return res;
+  } catch (err) {
+    console.error("AI request failed:", err);
+    throw new Error("AI service unavailable");
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function buildContext(profile: any, history: any[], reports: any[], twinState?: any) {
