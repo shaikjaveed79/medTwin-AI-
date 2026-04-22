@@ -136,7 +136,10 @@ const controller = new AbortController();
 const timeout = setTimeout(() => controller.abort(), 15000);
 
 let response;
-
+console.error("treatment-simulate error:", {
+  message: e instanceof Error ? e.message : e,
+  stack: e instanceof Error ? e.stack : null,
+});
 try {
   response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
