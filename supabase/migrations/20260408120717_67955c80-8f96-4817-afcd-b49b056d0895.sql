@@ -1,5 +1,13 @@
-
--- Create profiles table
+-- =========================================
+-- MedTwin AI Database Schema
+-- Author: Rasool Shaik
+-- Role: Backend Engineer
+-- Description: Core database structure for health tracking system
+-- =========================================
+-- =========================================
+-- Table: profiles
+-- Stores user personal and medical information
+-- =========================================
 CREATE TABLE public.profiles (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
@@ -19,7 +27,8 @@ CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (
 CREATE POLICY "Users can create own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = user_id);
 
--- Create health_sessions table
+-- Table: health_sessions
+-- Stores symptom inputs and AI diagnosis results
 CREATE TABLE public.health_sessions (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -43,7 +52,8 @@ CREATE POLICY "Users can view own sessions" ON public.health_sessions FOR SELECT
 CREATE POLICY "Users can create own sessions" ON public.health_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own sessions" ON public.health_sessions FOR UPDATE USING (auth.uid() = user_id);
 
--- Create medical_reports table
+-- Table: medical_reports
+-- Stores uploaded reports and extracted data
 CREATE TABLE public.medical_reports (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -61,7 +71,8 @@ CREATE POLICY "Users can view own reports" ON public.medical_reports FOR SELECT 
 CREATE POLICY "Users can create own reports" ON public.medical_reports FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own reports" ON public.medical_reports FOR DELETE USING (auth.uid() = user_id);
 
--- Create health_timeline table
+-- Table: health_timeline
+-- Tracks chronological health events
 CREATE TABLE public.health_timeline (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
