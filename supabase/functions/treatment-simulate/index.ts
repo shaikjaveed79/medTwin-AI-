@@ -11,6 +11,13 @@ function jsonResponse(data: any, status = 200) {
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
 }
+const token = authHeader.replace("Bearer ", "");
+const token = extractToken(req);
+if (!token) {
+function extractToken(req: Request): string | null {
+  const auth = req.headers.get("Authorization");
+  return auth?.startsWith("Bearer ") ? auth.replace("Bearer ", "") : null;
+}
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
