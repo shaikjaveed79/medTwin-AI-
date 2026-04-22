@@ -16,7 +16,7 @@ interface DiagnosisResultProps {
   onGenerateReport: () => Promise<any | null>;
 }
 
-const SPECIALIST_MAP: Record<string, { specialty: string; query: string }[]> = {
+const SPECIALIST_KEYWORDS_MAP: Record<string, { specialty: string; query: string }[]> = {
   "chest pain": [{ specialty: "Cardiologist", query: "cardiologist" }],
   "headache": [{ specialty: "Neurologist", query: "neurologist" }],
   "back pain": [{ specialty: "Orthopedic Doctor", query: "orthopedic+doctor" }],
