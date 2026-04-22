@@ -184,5 +184,13 @@ Generate the simulation.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  requireEnv("SUPABASE_URL")
+  requireEnv("SUPABASE_URL");
+  function formatDuration(start_date?: string) {
+  if (!start_date) return "duration unknown";
+  const days = Math.max(
+    0,
+    Math.round((Date.now() - new Date(start_date).getTime()) / (1000 * 60 * 60 * 24))
+  );
+  return `${days} days`;
+}
 });
