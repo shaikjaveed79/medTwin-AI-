@@ -53,7 +53,10 @@ serve(async (req) => {
   "purpose": "1-2 sentences: what this medication does and why someone with these conditions might take it",
   "missed_dose_instructions": "2-3 sentences: practical advice if a dose is missed (e.g. take it as soon as you remember unless it's almost time for the next dose, never double up). Be specific to this drug class when known."
 }
-Keep each field under 280 characters. Avoid medical jargon. Never invent a diagnosis.`;
+Keep each field under 280 characters. Avoid medical jargon. Never invent a diagnosis.
+- Keep tone empathetic and simple
+- Avoid repeating phrases
+- Tailor response to patient conditions when possible`;
 
     const userPrompt = `Medication: ${name}${dosage ? ` (${dosage})` : ""}${frequency ? `, ${frequency}` : ""}.
 Patient chronic conditions: ${(conditions || []).join(", ") || "none reported"}.`;
