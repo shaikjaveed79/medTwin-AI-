@@ -1,4 +1,16 @@
-import { Activity, Brain, Camera, Clock, FileText, FlaskConical, Heart, MessageCircle, Pill, Shield, User, LogOut } from "lucide-react";
+import {
+  Brain,
+  Camera,
+  Clock,
+  FileText,
+  FlaskConical,
+  Heart,
+  MessageCircle,
+  Pill,
+  Shield,
+  User,
+  LogOut,
+} from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
