@@ -10,6 +10,9 @@ export default tseslint.config(
     "dist",
   ],
 },
+
+// ESLint configuration for React + TypeScript project
+
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: [
